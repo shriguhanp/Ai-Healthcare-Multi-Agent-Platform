@@ -1,14 +1,14 @@
 /**
  * Guardrails Middleware
  * Safety checks for AI agent queries
- * UPDATED: Less restrictive - only blocks non-medical topics
+ * UPDATED: STRICT SCOPE VALIDATION - agents only answer questions within their domain
  */
 
 import { getGuardrailConfig } from "../config/agentConfig.js";
 
 /**
  * Check if a message violates guardrails for a specific agent
- * Only blocks clearly off-topic (non-medical) queries
+ * Blocks off-topic queries using forbidden keywords
  * @param {string} message - User message to check
  * @param {string} agentType - 'diagnostic' or 'masc'
  * @returns {object} - { allowed: boolean, response?: string }
@@ -17,7 +17,7 @@ export function checkGuardrails(message, agentType) {
     const config = getGuardrailConfig(agentType);
     const lowerMessage = message.toLowerCase();
 
-    // Check each forbidden keyword/phrase (only non-medical topics)
+    // Check each forbidden keyword/phrase
     for (const forbidden of config.forbidden) {
         if (lowerMessage.includes(forbidden.toLowerCase())) {
             console.log(`[Guardrail] Blocked off-topic query for ${agentType}: "${message.substring(0, 50)}..."`);
@@ -70,13 +70,67 @@ If this is NOT an emergency and you'd like to continue our conversation, please 
 }
 
 /**
- * Soft scope validation - provides helpful guidance without blocking
+ * STRICT SCOPE VALIDATION - Check if query matches agent's domain
+ * Uses positive keyword matching to validate scope appropriateness
  * @param {string} message - User message
  * @param {string} agentType - 'diagnostic' or 'masc'
  * @returns {object} - { appropriate: boolean, guidance?: string }
  */
 export function validateAgentScope(message, agentType) {
-    // No longer blocking - just return appropriate for all medical queries
+    const lowerMessage = message.toLowerCase();
+
+    if (agentType === "diagnostic") {
+        // Diagnostic agent keywords - symptoms, conditions, tests, diagnosis
+        const diagnosticKeywords = [
+            "symptom", "pain", "ache", "hurt", "sore", "fever", "headache", "cough",
+            "tired", "fatigue", "dizzy", "nausea", "vomit", "diarrhea", "rash",
+            "condition", "disease", "disorder", "syndrome", "illness", "infection",
+            "test", "blood test", "lab", "scan", "x-ray", "mri", "ct scan", "result",
+            "diagnose", "diagnosis", "check", "exam", "doctor", "specialist",
+            "what is wrong", "what could", "could it be", "might be", "perhaps",
+            "cancer", "diabetes", "hypertension", "asthma", "flu", "cold",
+            "heart", "lung", "kidney", "liver", "stomach", "brain"
+        ];
+
+        // Check if query contains diagnostic keywords
+        const matches = diagnosticKeywords.some(keyword => lowerMessage.includes(keyword));
+
+        if (!matches) {
+            return {
+                appropriate: false,
+                guidance: "I'm a diagnostic assistant specialized in analyzing symptoms, understanding medical conditions, and explaining diagnostic tests. I notice your question might not be related to diagnosis. Could you please ask about symptoms, conditions, or diagnostic tests?"
+            };
+        }
+
+        return { appropriate: true };
+    }
+    else if (agentType === "masc") {
+        // MASC agent keywords - medications, drugs, side effects, adherence
+        const mascKeywords = [
+            "medication", "medicine", "drug", "pill", "tablet", "capsule",
+            "prescription", "dose", "dosage", "take", "taking",
+            "side effect", "reaction", "adverse", "interaction",
+            "pharmacy", "pharmacist", "refill",
+            "remember", "forgot", "miss", "missed dose", "skip",
+            "adherence", "compliance", "schedule", "timing",
+            "antibiotic", "painkiller", "insulin", "statin", "aspirin",
+            "supplement", "vitamin", "over the counter", "otc",
+            "how to take", "when to take", "with food", "before meal"
+        ];
+
+        // Check if query contains medication keywords
+        const matches = mascKeywords.some(keyword => lowerMessage.includes(keyword));
+
+        if (!matches) {
+            return {
+                appropriate: false,
+                guidance: "I'm a medication adherence coach specialized in helping with medicines, side effects, and how to take medications properly. I notice your question might not be related to medications. Could you please ask about medicines, dosages, or side effects?"
+            };
+        }
+
+        return { appropriate: true };
+    }
+
     return { appropriate: true };
 }
 

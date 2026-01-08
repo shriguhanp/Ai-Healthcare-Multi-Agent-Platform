@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import groq from "../config/groq.js";
 import { getSystemPrompt, getDisclaimer } from "../config/agentConfig.js";
 import { checkGuardrails, checkEmergency, validateAgentScope } from "../middleware/guardrails.js";
 import { retrieveContext, buildRAGPrompt } from "../middleware/ragService.js";
@@ -178,6 +179,53 @@ const callGeminiChat = async (systemPrompt, userMessage) => {
   }
 };
 
+/* -------------------- GROQ CHAT (AGENT-SPECIFIC MODELS) -------------------- */
+
+const callGroqChat = async (systemPrompt, userMessage, agent) => {
+  try {
+    if (!process.env.GROQ_API_KEY) {
+      console.warn("[Groq] No API key configured");
+      return null;
+    }
+
+    // Agent-specific model selection for optimal performance
+    // Using current available models as of 2026
+    let model, temperature;
+
+    if (agent === "diagnostic") {
+      // llama-3.3-70b-versatile: Recommended for general use, best for complex medical reasoning
+      model = "llama-3.3-70b-versatile";
+      temperature = 0.3; // Lower temperature for more accurate, focused diagnostic responses
+    } else if (agent === "masc") {
+      // llama-3.1-8b-instant: Faster results, excellent for conversational coaching
+      model = "llama-3.1-8b-instant";
+      temperature = 0.5; // Moderate temperature for empathetic, supportive coaching responses
+    } else {
+      // Fallback to versatile model
+      model = "llama-3.3-70b-versatile";
+      temperature = 0.4;
+    }
+
+    console.log(`[Groq] Using ${model} (temp: ${temperature}) for ${agent} agent`);
+    console.log(`[Groq] Sending request with system prompt length: ${systemPrompt.length}`);
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userMessage }
+      ],
+      model: model,
+      temperature: temperature,
+      max_tokens: 300,
+    });
+
+    return completion.choices[0]?.message?.content || null;
+  } catch (err) {
+    console.error("Groq chat error:", err.message);
+    return null;
+  }
+};
+
 /* -------------------- CHAT CONTROLLER WITH RAG & GUARDRAILS -------------------- */
 
 export const chatWithAgent = async (req, res) => {
@@ -226,11 +274,16 @@ export const chatWithAgent = async (req, res) => {
       });
     }
 
-    // Step 3: Validate agent scope (soft check with guidance)
+    // Step 3: Validate agent scope (strict check - block if not appropriate)
     const scopeCheck = validateAgentScope(message, agent);
-    let scopeGuidance = "";
     if (!scopeCheck.appropriate) {
-      scopeGuidance = scopeCheck.guidance + "\n\n";
+      console.log(`[Agent: ${agent}] Scope validation failed - question not appropriate for this agent`);
+      return res.json({
+        success: true,
+        reply: scopeCheck.guidance,
+        agent,
+        scopeBlocked: true
+      });
     }
 
     // Step 4: Retrieve relevant context from dataset (RAG)
@@ -241,20 +294,25 @@ export const chatWithAgent = async (req, res) => {
     // Step 5: Build the complete prompt with system prompt and context
     const systemPrompt = getSystemPrompt(agent, context);
 
-    // Step 6: Call the LLM
-    let reply = await callGeminiChat(systemPrompt, message);
+    // Step 6: Call the LLM (Using Groq as primary, Gemini as fallback)
+    let reply = await callGroqChat(systemPrompt, message, agent);
+
+    if (!reply) {
+      console.warn(`[Agent: ${agent}] Groq failed, trying Gemini...`);
+      reply = await callGeminiChat(systemPrompt, message);
+    }
 
     // Step 7: Handle fallback if LLM fails
     if (!reply) {
-      console.warn(`[Agent: ${agent}] LLM returned no response, using fallback`);
+      console.warn(`[Agent: ${agent}] All LLMs failed, using basic fallback`);
       reply = provideBasicFallbackResponse(message, agent);
     }
 
     // Step 8: Add disclaimer
     const disclaimer = getDisclaimer(agent);
 
-    // Step 9: Combine response with any scope guidance
-    const finalReply = scopeGuidance + reply.trim() + disclaimer;
+    // Step 9: Combine response with disclaimer
+    const finalReply = reply.trim() + disclaimer;
 
     console.log(`[Agent: ${agent}] Response generated successfully`);
 

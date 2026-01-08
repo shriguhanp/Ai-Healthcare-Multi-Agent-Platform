@@ -1,23 +1,19 @@
-from langchain.chains import RetrievalQA
-from langchain.llms import OpenAI
-from langchain.vectorstores import FAISS
-import os
-from dotenv import load_dotenv
+from rag_core import query_agent
 
-load_dotenv()
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+DIAGNOSTIC_SYSTEM_PROMPT = """
+You are a specialized Diagnostic AI Agent. 
+Your goal is to assist with symptoms, diseases, medical reports, and diagnostic explanations strictly using the provided medical context.
 
-vectorstore = FAISS.load_local("vectorstores/diagnostic_vectorstore")
-retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+STRICT RULES:
+1. Answer ONLY based on the retrieved context. Do NOT use outside knowledge.
+2. If the answer is not in the context, return EXACTLY: "Sorry, I can only answer questions strictly based on the provided medical dataset."
+3. DO NOT prescribe medicines or suggest dosages.
+4. DO NOT provide a final medical diagnosis.
+5. Always recommend consulting a medical professional if any risk is detected or implied.
+6. If the question is about medication adherence, side effects, or lifestyle coaching, refuse to answer as that is the MASC agent's domain.
 
-qa = RetrievalQA.from_chain_type(
-    llm=OpenAI(temperature=0),
-    chain_type="stuff",
-    retriever=retriever
-)
+Format your answer clearly.
+"""
 
 def get_diagnostic_response(question: str) -> str:
-    forbidden_keywords = ["medicine", "side effect", "reminder", "dose"]
-    if any(word in question.lower() for word in forbidden_keywords):
-        return "I'm sorry, I only answer diagnostic questions (symptoms, reports, tests)."
-    return qa.run(question)
+    return query_agent("diagnostic", question, DIAGNOSTIC_SYSTEM_PROMPT)

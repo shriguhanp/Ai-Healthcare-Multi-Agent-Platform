@@ -1,0 +1,21 @@
+Imported ragEngine OK
+🚀 Initializing RAG Engine (Loading Datasets)...
+   - Loading Diagnostic PDF...
+Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: Package subpath './lib/pdf.js/v1.10.100/build/pdf.js' is not defined by "exports" in C:\Users\Hp\OneDrive\Desktop\HEALTHCARE\backend\node_modules\pdf-parse\package.json imported from C:\Users\Hp\OneDrive\Desktop\HEALTHCARE\backend\node_modules\@langchain\community\dist\document_loaders\fs\pdf.js
+    at exportsNotFound (node:internal/modules/esm/resolve:313:10)
+    at packageExportsResolve (node:internal/modules/esm/resolve:660:9)
+    at packageResolve (node:internal/modules/esm/resolve:773:12)
+    at moduleResolve (node:internal/modules/esm/resolve:853:18)
+    at defaultResolve (node:internal/modules/esm/resolve:983:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:717:20)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:694:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:308:38)
+    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:650:36)
+    at TracingChannel.tracePromise (node:diagnostics_channel:344:14) {
+  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'
+}
+❌ RAG Initialization Failed: Error: Failed to load pdf-parse. This loader currently supports pdf-parse v1 only. Please install v1, e.g. `npm install pdf-parse@^1` (v2 is not yet supported).
+    at PDFLoader.PDFLoaderImports [as pdfjs] (file:///C:/Users/Hp/OneDrive/Desktop/HEALTHCARE/backend/node_modules/@langchain/community/dist/document_loaders/fs/pdf.js:107:9)
+    at async PDFLoader.parse (file:///C:/Users/Hp/OneDrive/Desktop/HEALTHCARE/backend/node_modules/@langchain/community/dist/document_loaders/fs/pdf.js:46:36)
+    at async initRAG (file:///C:/Users/Hp/OneDrive/Desktop/HEALTHCARE/backend/ragEngine.js:48:26)
+initRAG completed
