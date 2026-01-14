@@ -4,9 +4,7 @@ A full-stack MERN (MongoDB, Express, React, Node.js) healthcare application feat
 
 # Screenshots
 <img width="1597" height="778" alt="image" src="https://github.com/user-attachments/assets/a3701ed5-a48a-4f61-90ed-a3a933c9d0c6" />
-<img width="1534" height="684" alt="image" src="https://github.com/user-attachments/assets/e8f1c099-2681-4b00-9cae-b8e04012ac5a" />
 <img width="1534" height="854" alt="image" src="https://github.com/user-attachments/assets/1fe114c3-4825-489e-b3df-e64a76bcd67b" />
-<img width="1682" height="808" alt="image" src="https://github.com/user-attachments/assets/dbcffba2-a158-411c-95cf-9547442d3f9b" />
 <img width="1544" height="731" alt="image" src="https://github.com/user-attachments/assets/57f5c447-4ba9-4c99-9bb9-ae9172ae0a58" />
 
 
