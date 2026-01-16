@@ -472,6 +472,39 @@ const editMedicine = async (req, res) => {
     }
 }
 
+// API to delete a medicine
+const deleteMedicine = async (req, res) => {
+    try {
+        const { userId, entryDate, medIndex } = req.body
+        if (!userId || entryDate == null || medIndex == null) {
+            return res.json({ success: false, message: 'Missing data' })
+        }
+
+        const user = await userModel.findById(userId)
+        if (!user) return res.json({ success: false, message: 'User not found' })
+
+        const entry = (user.medicalAdherence || []).find(e => String(e.date) === String(entryDate))
+        if (!entry) return res.json({ success: false, message: 'Prescription entry not found' })
+
+        const med = entry.medicines && entry.medicines[medIndex]
+        if (!med) return res.json({ success: false, message: 'Medicine not found' })
+
+        entry.medicines.splice(medIndex, 1)
+
+        if (!entry.medicines || entry.medicines.length === 0) {
+            user.medicalAdherence = (user.medicalAdherence || []).filter(e => String(e.date) !== String(entryDate))
+        }
+
+        await user.save()
+
+        const returnUser = await userModel.findById(userId).select('-password')
+        res.json({ success: true, message: 'Medicine deleted successfully', userData: returnUser })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
 // API to search nearby doctors based on location
 const getNearbyDoctors = async (req, res) => {
     try {
@@ -591,6 +624,7 @@ export {
     verifyStripe,
     updateMedicationIntake,
     editMedicine,
+    deleteMedicine,
     // Advanced features
     getNearbyDoctors,
     rateAppointment,

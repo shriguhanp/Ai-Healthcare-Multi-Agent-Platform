@@ -14,20 +14,12 @@ Quick booking with real-time updates and reminders.
 Healthcare made easy, fast, and reliable.</p>
         </div>
 
-        <div>
-          <p className='text-xl font-medium mb-5'>COMPANY</p>
-          <ul className='flex flex-col gap-2 text-gray-600'>
-            <li>Home</li>
-            <li>About us</li>
-            <li>Delivery</li>
-            <li>Privacy policy</li>
-          </ul>
-        </div>
+
 
         <div>
-          <p className='text-xl font-medium mb-5'>GET IN TOUCH</p>
+          <p className='text-xl font-medium mb-5'>CONTACT</p>
           <ul className='flex flex-col gap-2 text-gray-600'>
-            <li>9974586514</li>
+            <li>9976887255</li>
             <li>shriguhan7@gmail.com</li>
           </ul>
         </div>

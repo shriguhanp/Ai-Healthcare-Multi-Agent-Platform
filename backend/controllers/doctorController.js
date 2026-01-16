@@ -289,6 +289,102 @@ const updateLocation = async (req, res) => {
     }
 };
 
+const getDoctorPrescriptions = async (req, res) => {
+    try {
+        const { docId } = req.body;
+
+        if (!docId) {
+            return res.json({ success: false, message: 'Doctor ID required' });
+        }
+
+        const users = await userModel.find(
+            { 'medicalAdherence.docId': docId },
+            { _id: 1, name: 1, email: 1, medicalAdherence: 1 }
+        );
+
+        const prescriptions = [];
+        users.forEach(user => {
+            user.medicalAdherence.forEach((entry, idx) => {
+                if (entry.docId === docId) {
+                    prescriptions.push({
+                        _id: `${user._id}-${idx}`,
+                        userId: user._id,
+                        userName: user.name,
+                        userEmail: user.email,
+                        medicines: entry.medicines,
+                        date: entry.date,
+                        docName: entry.docName,
+                        entryIndex: idx,
+                        docId: entry.docId
+                    });
+                }
+            });
+        });
+
+        res.json({ success: true, prescriptions: prescriptions.sort((a, b) => new Date(b.date) - new Date(a.date)) });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+const updatePrescription = async (req, res) => {
+    try {
+        const { userId, entryIndex, medicines, docId } = req.body;
+
+        if (!userId || entryIndex === undefined || !medicines) {
+            return res.json({ success: false, message: 'Missing required fields' });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user || !user.medicalAdherence[entryIndex]) {
+            return res.json({ success: false, message: 'Prescription not found' });
+        }
+
+        if (user.medicalAdherence[entryIndex].docId !== docId) {
+            return res.json({ success: false, message: 'Unauthorized to edit this prescription' });
+        }
+
+        user.medicalAdherence[entryIndex].medicines = medicines;
+        await user.save();
+
+        res.json({ success: true, message: 'Prescription updated successfully' });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+const deletePrescription = async (req, res) => {
+    try {
+        const { userId, entryIndex, docId } = req.body;
+
+        if (!userId || entryIndex === undefined) {
+            return res.json({ success: false, message: 'Missing required fields' });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user || !user.medicalAdherence[entryIndex]) {
+            return res.json({ success: false, message: 'Prescription not found' });
+        }
+
+        if (user.medicalAdherence[entryIndex].docId !== docId) {
+            return res.json({ success: false, message: 'Unauthorized to delete this prescription' });
+        }
+
+        user.medicalAdherence.splice(entryIndex, 1);
+        await user.save();
+
+        res.json({ success: true, message: 'Prescription deleted successfully' });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 export {
     loginDoctor,
     appointmentsDoctor,
@@ -305,5 +401,9 @@ export {
     // Advanced features
     updateAvailabilityStatus,
     getTokenInfo,
-    updateLocation
+    updateLocation,
+    // Prescription management
+    getDoctorPrescriptions,
+    updatePrescription,
+    deletePrescription
 }

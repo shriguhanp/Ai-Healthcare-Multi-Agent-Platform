@@ -19,6 +19,7 @@ import DoctorDashboard from './pages/Doctor/DoctorDashboard';
 import DoctorProfile from './pages/Doctor/DoctorProfile';
 import Patients from './pages/Doctor/Patients';
 import DoctorChat from './pages/Doctor/DoctorChat';
+import Prescriptions from './pages/Doctor/Prescriptions';
 import { DoctorChatContextProvider } from './context/DoctorChatContext';
 
 const App = () => {
@@ -46,6 +47,7 @@ const App = () => {
               <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
               <Route path='/doctor-appointments' element={<DoctorAppointments />} />
               <Route path='/doctor-patients' element={<Patients />} />
+              <Route path='/doctor-prescriptions' element={<Prescriptions />} />
               <Route path='/doctor-profile' element={<DoctorProfile />} />
               <Route
                 path='/doctor-chat'

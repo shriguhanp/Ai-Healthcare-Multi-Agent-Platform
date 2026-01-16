@@ -15,6 +15,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Verify from './pages/Verify'
 import MedicalAdherenceAI from './pages/Medical'
+import MedicationSchedule from './pages/MedicationSchedule'
+import HealthCoach from './pages/HealthCoach'
 import AIAgents from './pages/Agent'
 import DiagnosticChat from "./pages/agents/diagnostic";
 import MascChat from "./pages/agents/masc";
@@ -41,6 +43,8 @@ const App = () => {
           <Route path='/my-appointments' element={<MyAppointments />} />
           <Route path='/my-profile' element={<MyProfile />} />
           <Route path='/medical' element={<MedicalAdherenceAI />} />
+          <Route path='/medication-schedule' element={<MedicationSchedule />} />
+          <Route path='/health-coach' element={<HealthCoach />} />
           <Route path='/verify' element={<Verify />} />
 
           {/* AI Agents */}

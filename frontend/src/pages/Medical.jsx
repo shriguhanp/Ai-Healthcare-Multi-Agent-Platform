@@ -8,12 +8,23 @@ export default function MedicalAdherence() {
 
   const [editing, setEditing] = useState({ entryDate: null, medIndex: null })
   const [editValues, setEditValues] = useState({ name: '', dosage: '', days: 1 })
+  const [expandedEntry, setExpandedEntry] = useState(null)
 
   const entries = userData?.medicalAdherence || []
 
   const formatDate = (ts) => {
     try {
-      return new Date(ts).toLocaleString()
+      const date = new Date(ts)
+      return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    } catch {
+      return ''
+    }
+  }
+
+  const formatTime = (ts) => {
+    try {
+      const date = new Date(ts)
+      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     } catch {
       return ''
     }
@@ -82,130 +93,205 @@ export default function MedicalAdherence() {
     setEditing({ entryDate: null, medIndex: null })
   }
 
+  const handleDelete = async (entryDate, medIndex, medName) => {
+    if (!window.confirm(`Are you sure you want to delete "${medName}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const { data } = await axios.post(
+        backendUrl + '/api/user/medication/delete',
+        {
+          userId: userData._id,
+          entryDate,
+          medIndex
+        },
+        { headers: { token } }
+      )
+
+      if (data.success) {
+        toast.success(data.message || 'Medication deleted')
+        await loadUserProfileData()
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete medication')
+    }
+  }
+
   return (
-    <div className='min-h-screen bg-gray-50 p-6 md:p-12'>
-      {/* Header */}
-      <div className='mb-10'>
-        <h1 className='text-3xl font-bold text-[#262626] mb-2'>Digital Prescription</h1>
-        <p className='text-gray-600 text-sm'>Track and manage your prescribed medications efficiently.</p>
-      </div>
+    <div className='min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-8 px-4 md:px-8'>
+      <div className='max-w-6xl mx-auto'>
+        
+        {/* Header Section */}
+        <div className='mb-8'>
+          <div className='flex items-center gap-3 mb-3'>
+            <div className='w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center'>
+              <span className='text-2xl'>📋</span>
+            </div>
+            <div>
+              <h1 className='text-4xl font-bold text-gray-800'>Digital Prescription</h1>
+              <p className='text-gray-600 mt-1'>Manage and track your medications with ease</p>
+            </div>
+          </div>
+        </div>
 
-      {/* Prescriptions */}
-      <div className='bg-white shadow-md rounded-xl p-6 md:p-10'>
-        <h2 className='text-xl font-bold text-[#262626] mb-6 border-b pb-4'>Your Prescriptions</h2>
-
+        {/* Empty State */}
         {entries.length === 0 && (
-          <div className='text-center py-16 bg-gray-50 rounded-lg border border-dashed border-gray-300'>
-            <p className='text-gray-500 text-base'>No prescriptions found. Consult a doctor to get started.</p>
+          <div className='bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center'>
+            <div className='mb-4'>
+              <span className='text-6xl'>💊</span>
+            </div>
+            <h3 className='text-xl font-semibold text-gray-800 mb-2'>No Prescriptions Yet</h3>
+            <p className='text-gray-600'>Consult a doctor to get your prescriptions and start tracking your medications.</p>
           </div>
         )}
 
+        {/* Prescriptions List */}
         {entries.map((entry, idx) => (
-          <div key={idx} className='border border-gray-200 rounded-xl p-6 mb-8 hover:shadow-sm transition-shadow duration-300'>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 pb-4 border-b border-gray-100'>
-              <div>
-                <p className='text-xs text-uppercase text-gray-400 font-bold tracking-wider'>PRESCRIBED ON</p>
-                <p className='text-[#262626] font-medium mt-1'>{formatDate(entry.date)}</p>
-              </div>
-              <div>
-                <p className='text-xs text-uppercase text-gray-400 font-bold tracking-wider'>DOCTOR</p>
-                <p className='text-[#262626] font-medium mt-1'>{entry.docName || 'N/A'}</p>
-              </div>
-              <div>
-                <p className='text-xs text-uppercase text-gray-400 font-bold tracking-wider'>TOTAL MEDICINES</p>
-                <p className='text-[#262626] font-medium mt-1'>
-                  {(entry.medicines || []).length} items
-                </p>
+          <div key={idx} className='mb-6'>
+            
+            {/* Prescription Header Card */}
+            <div 
+              onClick={() => setExpandedEntry(expandedEntry === idx ? null : idx)}
+              className='bg-white rounded-t-xl shadow-md border border-gray-200 p-6 cursor-pointer hover:shadow-lg transition-shadow duration-300'
+            >
+              <div className='flex items-center justify-between'>
+                <div className='flex-1'>
+                  <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                    <div>
+                      <p className='text-xs font-bold text-gray-400 uppercase tracking-wide mb-1'>Date</p>
+                      <p className='text-sm font-semibold text-gray-800'>{formatDate(entry.date)}</p>
+                      <p className='text-xs text-gray-500'>{formatTime(entry.date)}</p>
+                    </div>
+                    <div>
+                      <p className='text-xs font-bold text-gray-400 uppercase tracking-wide mb-1'>Doctor</p>
+                      <p className='text-sm font-semibold text-gray-800'>{entry.docName || '—'}</p>
+                    </div>
+                    <div>
+                      <p className='text-xs font-bold text-gray-400 uppercase tracking-wide mb-1'>Medications</p>
+                      <p className='text-sm font-semibold text-gray-800'>{(entry.medicines || []).length}</p>
+                    </div>
+                    <div>
+                      <p className='text-xs font-bold text-gray-400 uppercase tracking-wide mb-1'>Status</p>
+                      <p className='text-sm font-semibold text-blue-600'>Active</p>
+                    </div>
+                  </div>
+                </div>
+                <div className='ml-4'>
+                  <span className={`text-xl transition-transform ${expandedEntry === idx ? 'rotate-180' : ''}`}>▼</span>
+                </div>
               </div>
             </div>
 
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-4'>
-              {(entry.medicines || []).map((m, i) => (
-                <div key={i} className='border border-gray-100 rounded-lg p-5 bg-gray-50 flex flex-col justify-between'>
-                  <div className='flex justify-between items-start mb-3'>
-                    <div>
-                      <h3 className='text-lg font-bold text-[#262626] leading-tight'>{m.name}</h3>
-                      <div className='flex flex-wrap gap-2 mt-2 text-sm text-gray-600'>
-                        <span className='bg-white border border-gray-200 px-2 py-1 rounded text-xs font-medium'>{m.dosage}</span>
-                        <span className='bg-white border border-gray-200 px-2 py-1 rounded text-xs font-medium'>{m.times?.join(', ') || 'As prescribed'}</span>
-                        <span className='bg-white border border-gray-200 px-2 py-1 rounded text-xs font-medium'>{m.meal}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className='flex items-center justify-between mt-4 pt-4 border-t border-gray-200'>
-                    <span className='text-sm font-medium text-primary'>
-                      {m.days} {m.days > 1 ? 'days' : 'day'}
-                    </span>
-                    <div className='flex gap-2'>
-                      <button
-                        title='Mark as Taken'
-                        onClick={() => handleIntake(entry.date, i, 'taken')}
-                        className='bg-green-50 text-green-600 border border-green-200 rounded-lg px-3 py-1.5 hover:bg-green-100 text-sm font-medium transition-colors flex items-center gap-1'
-                      >
-                        <span>Taken</span>
-                      </button>
-
-                      <button
-                        title='Mark as Missed'
-                        onClick={() => handleIntake(entry.date, i, 'missed')}
-                        className='bg-red-50 text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-100 text-sm font-medium transition-colors flex items-center gap-1'
-                      >
-                        <span>Missed</span>
-                      </button>
-
-                      <button
-                        title='Edit Medicine'
-                        onClick={() => startEdit(entry.date, i, m)}
-                        className='bg-white text-gray-600 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-100 text-sm font-medium transition-colors'
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  </div>
-
-                  {editing.entryDate === entry.date && editing.medIndex === i && (
-                    <div className='mt-4 pt-4 border-t border-gray-200'>
-                      <h4 className='text-sm font-bold mb-3 text-gray-700'>Edit Medicine Details</h4>
-
-                      <div className='grid grid-cols-1 gap-3 mb-3'>
-                        <input
-                          value={editValues.name}
-                          onChange={e => setEditValues(v => ({ ...v, name: e.target.value }))}
-                          className='border rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-1 focus:ring-primary'
-                          placeholder='Medicine name'
-                        />
-                        <div className='grid grid-cols-2 gap-3'>
-                          <input
-                            value={editValues.dosage}
-                            onChange={e => setEditValues(v => ({ ...v, dosage: e.target.value }))}
-                            className='border rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-1 focus:ring-primary'
-                            placeholder='Dosage'
-                          />
-                          <input
-                            type='number'
-                            min={0}
-                            value={editValues.days}
-                            onChange={e => setEditValues(v => ({ ...v, days: e.target.value }))}
-                            className='border rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-1 focus:ring-primary'
-                            placeholder='Days'
-                          />
+            {/* Medicines Grid */}
+            {expandedEntry === idx && (
+              <div className='bg-gray-50 rounded-b-xl shadow-md border border-t-0 border-gray-200 p-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
+                  {(entry.medicines || []).map((m, i) => (
+                    <div key={i} className='bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow'>
+                      
+                      {/* Medicine Name & Info */}
+                      <div className='mb-4'>
+                        <h3 className='text-lg font-bold text-gray-800'>{m.name}</h3>
+                        <div className='flex flex-wrap gap-2 mt-3'>
+                          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200'>
+                            💊 {m.dosage}
+                          </span>
+                          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200'>
+                            🕐 {m.times?.join(', ') || 'As needed'}
+                          </span>
+                          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200'>
+                            🍽️ {m.meal}
+                          </span>
+                          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200'>
+                            📅 {m.days} day{m.days > 1 ? 's' : ''}
+                          </span>
                         </div>
                       </div>
 
-                      <div className='flex gap-2 justify-end'>
-                        <button onClick={cancelEdit} className='text-gray-500 hover:text-gray-700 text-sm font-medium px-3 py-1.5'>
-                          Cancel
-                        </button>
-                        <button onClick={submitEdit} className='bg-primary text-white text-sm font-medium px-4 py-1.5 rounded hover:bg-primary/90 transition-colors'>
-                          Save Changes
-                        </button>
+                      {/* Action Buttons */}
+                      <div className='space-y-2 mb-4'>
+                        <div className='flex gap-2'>
+                          <button
+                            onClick={() => handleIntake(entry.date, i, 'taken')}
+                            className='flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-2'
+                          >
+                            ✓ Taken
+                          </button>
+                          <button
+                            onClick={() => handleIntake(entry.date, i, 'missed')}
+                            className='flex-1 bg-rose-500 hover:bg-rose-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm flex items-center justify-center gap-2'
+                          >
+                            ✗ Missed
+                          </button>
+                        </div>
+                        <div className='flex gap-2'>
+                          <button
+                            onClick={() => startEdit(entry.date, i, m)}
+                            className='flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-3 rounded-lg transition-colors text-sm'
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(entry.date, i, m.name)}
+                            className='flex-1 bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-3 rounded-lg transition-colors text-sm'
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Edit Form */}
+                      {editing.entryDate === entry.date && editing.medIndex === i && (
+                        <div className='bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4'>
+                          <h4 className='text-sm font-bold text-gray-800 mb-3'>Edit Medication</h4>
+                          <div className='space-y-3'>
+                            <input
+                              value={editValues.name}
+                              onChange={e => setEditValues(v => ({ ...v, name: e.target.value }))}
+                              className='w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                              placeholder='Medicine name'
+                            />
+                            <div className='grid grid-cols-2 gap-3'>
+                              <input
+                                value={editValues.dosage}
+                                onChange={e => setEditValues(v => ({ ...v, dosage: e.target.value }))}
+                                className='border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                placeholder='Dosage'
+                              />
+                              <input
+                                type='number'
+                                min={0}
+                                value={editValues.days}
+                                onChange={e => setEditValues(v => ({ ...v, days: e.target.value }))}
+                                className='border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                                placeholder='Days'
+                              />
+                            </div>
+                            <div className='flex gap-2 pt-2'>
+                              <button 
+                                onClick={cancelEdit} 
+                                className='flex-1 text-gray-700 hover:text-gray-900 font-medium py-2 border border-gray-300 rounded-lg transition-colors'
+                              >
+                                Cancel
+                              </button>
+                              <button 
+                                onClick={submitEdit} 
+                                className='flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition-colors'
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -13,6 +13,7 @@ import {
     verifyStripe,
     updateMedicationIntake,
     editMedicine,
+    deleteMedicine,
     getNearbyDoctors,
     rateAppointment,
     getAllHospitals
@@ -34,9 +35,10 @@ userRouter.post("/verifyRazorpay", authUser, verifyRazorpay)
 userRouter.post("/payment-stripe", authUser, paymentStripe)
 userRouter.post("/verifyStripe", authUser, verifyStripe)
 
-// Medication actions: mark intake/missed and edit medicine
+// Medication actions: mark intake/missed, edit medicine, and delete medicine
 userRouter.post('/medication/intake', authUser, updateMedicationIntake)
 userRouter.post('/medication/edit', authUser, editMedicine)
+userRouter.post('/medication/delete', authUser, deleteMedicine)
 
 // New advanced routes
 userRouter.post('/search-doctors', getNearbyDoctors)

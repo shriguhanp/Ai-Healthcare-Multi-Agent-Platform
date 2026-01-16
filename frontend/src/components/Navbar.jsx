@@ -40,6 +40,10 @@ const Navbar = () => {
           <li className='py-1'>MEDICATION</li>
           <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
         </NavLink>
+        <NavLink to='/health-coach' >
+          <li className='py-1'>MASC</li>
+          <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
+        </NavLink>
         <NavLink to='/Agent' >
           <li className='py-1'>AI AGENTS</li>
           <hr className='border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden' />
@@ -76,7 +80,8 @@ const Navbar = () => {
             <NavLink onClick={() => setShowMenu(false)} to='/hospitals' ><p className='px-4 py-2 rounded full inline-block'>HOSPITALS</p></NavLink>
             <NavLink onClick={() => setShowMenu(false)} to='/about' ><p className='px-4 py-2 rounded full inline-block'>ABOUT</p></NavLink>
             <NavLink onClick={() => setShowMenu(false)} to='/contact' ><p className='px-4 py-2 rounded full inline-block'>CONTACT</p></NavLink>
-            <NavLink onClick={() => setShowMenu(false)} to='/Medical' ><p className='px-4 py-2 rounded full inline-block'>MEDICAL ADHERENCES</p></NavLink>
+            <NavLink onClick={() => setShowMenu(false)} to='/Medical' ><p className='px-4 py-2 rounded full inline-block'>MEDICATION</p></NavLink>
+            <NavLink onClick={() => setShowMenu(false)} to='/health-coach' ><p className='px-4 py-2 rounded full inline-block'>MASC</p></NavLink>
           </ul>
         </div>
       </div>

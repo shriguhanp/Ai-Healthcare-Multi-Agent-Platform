@@ -13,7 +13,10 @@ import {
     prescribePatient,
     updateAvailabilityStatus,
     getTokenInfo,
-    updateLocation
+    updateLocation,
+    getDoctorPrescriptions,
+    updatePrescription,
+    deletePrescription
 } from '../controllers/doctorController.js';
 import authDoctor from '../middleware/authDoctor.js';
 const doctorRouter = express.Router();
@@ -33,5 +36,9 @@ doctorRouter.post("/update-profile", authDoctor, updateDoctorProfile)
 doctorRouter.post("/update-status", authDoctor, updateAvailabilityStatus)
 doctorRouter.get("/token-info", authDoctor, getTokenInfo)
 doctorRouter.post("/update-location", authDoctor, updateLocation)
+// Prescription management routes
+doctorRouter.post("/prescriptions", authDoctor, getDoctorPrescriptions)
+doctorRouter.put("/prescription/update", authDoctor, updatePrescription)
+doctorRouter.delete("/prescription/delete", authDoctor, deletePrescription)
 
 export default doctorRouter;
